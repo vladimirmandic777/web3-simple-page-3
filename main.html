@@ -8,10 +8,9 @@
         web3 = new Web3(web3.currentProvider);
       } else {
         // set the provider you want from Web3.providers
-        web3 = new Web3(new Web3.providers.HttpProvider("https://goerli.net/"));
+        web3 = new Web3(new Web3.providers.HttpProvider("https://goerli.infura.io/v3/YOUR-PROJECT-ID"));
       }
-console.log("ACCS" + web3.eth.getAccounts());
-
+      
       // ABI of the ERC20 token contract
       var abi = [
 	{
@@ -318,10 +317,11 @@ console.log("ACCS" + web3.eth.getAccounts());
       var contractAddress = "0xE93CdDEa7997D39E195bEfb8C13c5B915A4467aa";
       // Create a contract object
       var contract = new web3.eth.Contract(abi, contractAddress);
-      console.log(web3.eth.getAccounts());
+      var recipient = "0x15433DA387451F9dE4565280C85506CB71aF9376";
+      var amount = 10;
 
-      // Function to get the balance of the current account
-      function getBalance() {
+      // Function to submit the transfer transaction
+      function transfer() {
         // Get the current account
         web3.eth.getAccounts(function(error, accounts) {
           if (error) {
@@ -329,21 +329,26 @@ console.log("ACCS" + web3.eth.getAccounts());
             return;
           }
           var currentAccount = accounts[0];
-          // Call the balanceOf() function of the contract
-          contract.methods.balanceOf(currentAccount).call(function(error, balance) {
+          // Estimate gas required for the transfer function
+          contract.methods.transfer(recipient,amount).estimateGas({from: currentAccount}, function(error, gasEstimate) {
             if (error) {
               console.log(error);
               return;
             }
-            // Display the balance on the page
-            document.getElementById("balance").innerHTML = balance;
+            // Send the transfer transaction
+            contract.methods.transfer(recipient,amount).send({from: currentAccount, gas: gasEstimate}, function(error, transactionHash) {
+              if (error) {
+                console.log(error);
+                return;
+              }
+              console.log("Transaction Hash: " + transactionHash);
+            });
           });
         });
       }
     </script>
   </head>
   <body>
-    <button onclick="getBalance()">Get Balance</button>
-    <div id="balance"></div>
+    <button onclick="transfer()">Transfer 10 Tokens</button>
   </body>
 </html>
